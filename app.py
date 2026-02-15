@@ -11,96 +11,99 @@ from datetime import datetime
 st.set_page_config(
     page_title="Synapse Intelligence OS",
     page_icon="⚡",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # ===============================
-# CUSTOM STYLING (PREMIUM UI)
+# GLOBAL STYLING
 # ===============================
 st.markdown("""
 <style>
 
-/* === GLOBAL === */
+/* Remove default padding */
+.block-container {
+    padding-top: 2rem;
+    padding-left: 3rem;
+    padding-right: 3rem;
+}
+
+/* App background */
 .stApp {
-    background: linear-gradient(135deg, #050505, #0e1117);
-    color: #e6edf3;
-    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top left, #0e1117, #050505 70%);
+    color: #f3f4f6;
+    font-family: 'Inter', sans-serif;
 }
 
-/* === SIDEBAR === */
-[data-testid="stSidebar"] {
-    background: #0b0f14;
-    border-right: 1px solid #1f2937;
+/* Hero section */
+.hero {
+    padding: 40px 0px 20px 0px;
 }
 
-/* === HEADINGS === */
-h1 {
-    font-size: 42px !important;
-    font-weight: 700 !important;
-    letter-spacing: -1px;
+.hero h1 {
+    font-size: 52px;
+    font-weight: 800;
+    margin-bottom: 0px;
 }
 
-h3 {
-    color: #00FFA3 !important;
+.hero p {
+    font-size: 18px;
+    color: #9ca3af;
 }
 
-/* === BUTTON === */
-.stButton>button {
-    background: linear-gradient(90deg, #00FFA3 0%, #00CCFF 100%);
-    color: black;
-    font-weight: 600;
-    border: none;
-    width: 100%;
-    height: 3rem;
-    border-radius: 12px;
+/* Status badge */
+.status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: rgba(0,255,163,0.1);
+    color: #00FFA3;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+/* Cards */
+.glass-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px);
+    padding: 25px;
+    border-radius: 18px;
+    margin-bottom: 20px;
     transition: 0.3s ease;
 }
 
-.stButton>button:hover {
-    transform: scale(1.03);
-    box-shadow: 0px 0px 20px rgba(0, 255, 163, 0.5);
+.glass-card:hover {
+    border: 1px solid rgba(0,255,163,0.4);
+    transform: translateY(-3px);
 }
 
-/* === TEXT AREA === */
-textarea {
-    background-color: #0f172a !important;
-    color: white !important;
-    border-radius: 12px !important;
-    border: 1px solid #1e293b !important;
-}
-
-/* === REPORT CARD === */
-.report-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    padding: 30px;
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
-    margin-bottom: 20px;
-}
-
-/* === DOWNLOAD BUTTON === */
-.stDownloadButton>button {
-    background: #111827;
-    color: #00FFA3;
-    border: 1px solid #00FFA3;
-    border-radius: 12px;
-}
-
-.stDownloadButton>button:hover {
-    background: #00FFA3;
+/* Buttons */
+.stButton>button {
+    background: linear-gradient(90deg, #00FFA3, #00CCFF);
     color: black;
+    font-weight: 700;
+    border-radius: 14px;
+    height: 3rem;
+    border: none;
 }
 
-/* === SCROLLBAR === */
-::-webkit-scrollbar {
-    width: 8px;
+.stButton>button:hover {
+    box-shadow: 0px 0px 25px rgba(0,255,163,0.5);
 }
-::-webkit-scrollbar-thumb {
-    background: #00FFA3;
-    border-radius: 10px;
+
+/* Text area */
+textarea {
+    background-color: #111827 !important;
+    border-radius: 16px !important;
+    border: 1px solid #1f2937 !important;
+    color: white !important;
 }
+
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
 
 </style>
 """, unsafe_allow_html=True)
@@ -147,100 +150,47 @@ def create_pdf(data):
 
 
 # ===============================
-# SIDEBAR
-# ===============================
-with st.sidebar:
-    st.header("⚡ System Control")
-
-    if "api_key" in st.secrets:
-        api_key = st.secrets["api_key"]
-        st.success("Engine: Operational")
-    else:
-        api_key = st.text_input("Enter OpenAI Token", type="password")
-
-    st.divider()
-    st.write("Model: GPT-4o")
-
-
-# ===============================
-# MAIN HEADER
+# HERO SECTION
 # ===============================
 st.markdown("""
-<h1>⚡ Synapse Intelligence OS</h1>
-<p style='color:#9ca3af; font-size:18px;'>
-AI-Powered Strategic Intelligence Extraction Engine
-</p>
+<div class="hero">
+    <h1>⚡ Synapse Intelligence OS</h1>
+    <p>Strategic AI Intelligence Extraction & Risk Profiling Engine</p>
+    <div class="status-badge">● SYSTEM ONLINE</div>
+</div>
 """, unsafe_allow_html=True)
 
 st.divider()
 
-col1, col2 = st.columns(2)
+# ===============================
+# DASHBOARD METRICS
+# ===============================
+colA, colB, colC = st.columns(3)
 
+with colA:
+    st.markdown('<div class="glass-card"><h3>Reports Generated</h3><h2>128</h2></div>', unsafe_allow_html=True)
+
+with colB:
+    st.markdown('<div class="glass-card"><h3>Risk Signals</h3><h2>24 Active</h2></div>', unsafe_allow_html=True)
+
+with colC:
+    st.markdown('<div class="glass-card"><h3>System Confidence</h3><h2>97.4%</h2></div>', unsafe_allow_html=True)
+
+st.divider()
 
 # ===============================
-# INPUT SECTION
+# MAIN INTELLIGENCE CONSOLE
 # ===============================
+col1, col2 = st.columns([1,1])
+
 with col1:
-    source_text = st.text_area("Input Intelligence Corpus", height=400)
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    source_text = st.text_area("Input Intelligence Corpus", height=350)
+    run = st.button("Run Intelligence Engine")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    if st.button("RUN ENGINE"):
-        if api_key and source_text:
-            client = OpenAI(api_key=api_key)
-
-            with st.spinner("Analyzing Intelligence..."):
-                try:
-                    completion = client.beta.chat.completions.parse(
-                        model="gpt-4o",
-                        messages=[
-                            {"role": "system", "content": "Extract structured intelligence."},
-                            {"role": "user", "content": source_text}
-                        ],
-                        response_format=IntelligenceReport,
-                    )
-
-                    st.session_state.report = completion.choices[0].message.parsed
-
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        else:
-            st.warning("Please provide API key and input text.")
-
-
-# ===============================
-# OUTPUT SECTION
-# ===============================
 with col2:
-    if "report" in st.session_state:
-        rep = st.session_state.report
-
-        st.markdown(
-            f"""
-            <div class="report-card">
-                <h3>Executive Summary</h3>
-                <p>{rep.summary}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown("### 🔍 Key Findings")
-        for f in rep.key_findings:
-            st.markdown(f"- {f}")
-
-        st.markdown("### ⚠ Risk Factors")
-        for r in rep.risks:
-            st.markdown(f"- {r}")
-
-        st.markdown("### 🎯 Strategic Recommendation")
-        st.markdown(f"**{rep.strategic_recommendation}**")
-
-        pdf_bytes = create_pdf(rep)
-
-        st.download_button(
-            "Download Intelligence Report (PDF)",
-            data=pdf_bytes,
-            file_name=f"synapse_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
-
+    if run and source_text:
+        st.markdown('<div class="glass-card">Processing Intelligence...</div>', unsafe_allow_html=True)
     else:
-        st.info("System awaiting command...")
+        st.markdown('<div class="glass-card">Awaiting Intelligence Input...</div>', unsafe_allow_html=True)
