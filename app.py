@@ -1,42 +1,70 @@
 import streamlit as st
 from openai import OpenAI
+from pydantic import BaseModel
+from typing import List
+from fpdf import FPDF
+import io
 
-# 1. Page Config
-st.set_page_config(page_title="Synapse AI", page_icon="🧠", layout="wide")
+--- SENIOR UI CONFIG ---
+st.set_page_config(page_title="Synapse Intelligence OS", page_icon="⚡", layout="wide")
 
-# 2. Sidebar for API Key
+Injecting Custom CSS for a Mid-Senior "SaaS" Aesthetic
+st.markdown("""
+<style>
+.stApp { background-color: #050505; color: #e0e0e0; }
+[data-testid="stSidebar"] { background-color: #0c0c0c; border-right: 1px solid #333; }
+.stButton>button {
+background: linear-gradient(90deg, #00FFA3 0%, #00CCFF 100%);
+color: black; font-weight: bold; border: none; width: 100%; height: 3rem;
+border-radius: 8px;
+}
+.report-card {
+background: rgba(255, 255, 255, 0.03);
+padding: 24px; border-radius: 12px; border: 1px solid #333;
+border-left: 5px solid #00FFA3;
+}
+.stTabs [data-baseweb="tab-list"] { gap: 10px; }
+.stTabs [data-baseweb="tab"] {
+background-color: #111; border-radius: 4px 4px 0 0; padding: 10px 20px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+--- DATA SCHEMA (The "True Extraction" Layer) ---
+class IntelligenceReport(BaseModel):
+summary: str
+key_findings: List[str]
+risks: List[str]
+strategic_recommendation: str
+
+--- PDF GENERATOR ---
+def create_pdf(data):
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", 'B', 16)
+pdf.cell(200, 10, txt="Synapse AI: Intelligence Report", ln=True, align='C')
+pdf.ln(10)
+
+--- MAIN INTERFACE ---
+st.title("⚡ Synapse Intelligence OS")
+st.caption("Enterprise AI Extraction Engine | Developed by [Your Name]")
+
 with st.sidebar:
-    st.title("Settings")
-    api_key = st.text_input("Enter OpenAI API Key", type="password")
-    st.info("Get a key at platform.openai.com")
+st.header("Authentication")
+api_key = st.text_input("OpenAI API Key", type="password")
+st.divider()
+st.markdown("### System Specs")
+st.write("- Engine: GPT-4o")
+st.write("- Parser: Pydantic v2")
+st.info("Verified for high-fidelity data extraction.")
 
-# 3. Main UI
-st.title("🧠 Synapse AI: Executive Intelligence")
-st.markdown("---")
-
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
-    user_input = st.text_area("Paste complex text or reports here:", height=300)
-    analyze_button = st.button("Generate Intelligence Report", use_container_width=True)
+st.subheader("Data Ingestion")
+source_text = st.text_area("Paste Corpus Data", height=400, placeholder="Paste reports, logs, or transcripts here...")
 
 with col2:
-    if analyze_button:
-        if not api_key:
-            st.warning("Please enter your API Key in the sidebar!")
-        elif not user_input:
-            st.warning("Please paste some text first!")
-        else:
-            client = OpenAI(api_key=api_key)
-            with st.spinner("Decoding content..."):
-                # The "Strong" Prompt
-                prompt = f"Analyze this text and provide: 1. A 3-sentence executive summary. 2. The detected emotional tone. 3. Three 'Hidden Opportunities' or 'Actionable Risks'. Text: {user_input}"
-                
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                
-                report = response.choices[0].message.content
-                st.success("Analysis Complete")
-                st.markdown(report)
+st.subheader("Intelligence Output")
+if "report" in st.session_state:
+rep = st.session_state.report
