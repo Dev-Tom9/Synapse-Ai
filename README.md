@@ -2,39 +2,43 @@
 
 > Enterprise AI Intelligence & Risk Command Platform
 
-Synapse Intelligence OS is a production-ready AI web application built with **Streamlit** and **OpenAI**.  
-It transforms unstructured intelligence data (PDF or raw text) into structured executive insights including summaries, key findings, risk analysis, and strategic recommendations.
+Synapse Intelligence OS is a **production-ready AI web application** built with **Streamlit** and **OpenAI**.  
+It transforms unstructured intelligence data (PDF or raw text) into structured insights including **executive summaries, key findings, risk analysis, and strategic recommendations**.
 
-This project demonstrates real-world AI automation, structured output engineering, safe file handling, and SaaS-style dashboard design.
+The app demonstrates real-world AI automation, structured output validation, safe file handling, persistent storage, and a professional SaaS-style dashboard.
 
 ---
 
-## 🚀 Live Features
+## 🚀 Key Features
 
-- 📄 Upload intelligence reports in PDF format
-- 📝 Paste raw intelligence text
-- 🧠 AI-powered structured analysis
-- 📊 Dynamic risk severity visualization
-- 📈 AI confidence indicator
-- 🗂 Session-based report history
-- 📥 Export structured reports as downloadable PDFs
-- 🛡 Safe PDF error handling (prevents crashes)
-- 🎨 Premium glass-style enterprise dashboard UI
+- 📄 Upload **one or multiple PDFs** for aggregation
+- 📝 Paste raw text for analysis
+- 🧠 **AI-powered structured summaries** (or demo mode if no API key)
+- 📊 Dynamic **risk severity visualization**
+- 📈 **AI confidence indicator**
+- 🗂 **Persistent report history** using SQLite
+- 💾 Export reports as downloadable **PDFs**
+- 🛡 Safe PDF handling (prevents app crashes)
+- 🎨 Premium glass-style dashboard
+- 🌗 **Theme toggle** (Dark / Light)
+- ⚡ Fully responsive layout for **desktop & mobile**
 
 ---
 
 ## 🧠 AI Output Structure
 
-The system extracts and formats intelligence into:
+Reports include:
 
-- Executive Summary
-- Key Findings
-- Risk Identification
-- Strategic Recommendation
+- **Executive Summary**  
+- **Key Findings**  
+- **Risk Identification**  
+- **Strategic Recommendation**  
 
-Structured output is validated using **Pydantic models** to ensure consistent, production-grade formatting.
+If no OpenAI API key is provided or quota is exceeded:
 
-If no API key is provided or quota is exceeded, the system automatically switches to a safe fallback demo mode.
+- App switches to **demo mode**
+- Generates realistic example reports
+- Allows full **dashboard, analytics, and PDF download** functionality
 
 ---
 
@@ -43,16 +47,17 @@ If no API key is provided or quota is exceeded, the system automatically switche
 - Python
 - Streamlit
 - OpenAI API
-- Pydantic
-- PyPDF2
-- FPDF
-- Pandas
+- Pydantic (structured output validation)
+- PyPDF2 (PDF text extraction)
+- FPDF (PDF report generation)
+- Pandas (analytics & charts)
+- SQLite (persistent report storage)
 
 ---
 
 ## 📦 Installation (Local Setup)
 
-### 1️⃣ Clone the Repository
+### 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/yourusername/synapse-ai.git
@@ -73,7 +78,7 @@ venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 ```
 
-### 4️⃣ Run the Application
+### 4️⃣ Run Application
 
 ```bash
 streamlit run app.py
@@ -87,13 +92,7 @@ You can provide your OpenAI API key in two ways:
 
 ### Option 1 — Streamlit Secrets (Recommended for Production)
 
-Create:
-
-```
-.streamlit/secrets.toml
-```
-
-Add:
+Create `.streamlit/secrets.toml`:
 
 ```toml
 api_key = "your_openai_api_key_here"
@@ -101,7 +100,9 @@ api_key = "your_openai_api_key_here"
 
 ### Option 2 — Sidebar Input
 
-Enter your API key securely in the app sidebar during runtime.
+Enter your API key securely during runtime.
+
+> **If you leave it blank or run out of quota**, the app runs fully in **demo mode** with realistic example reports.
 
 ---
 
@@ -109,8 +110,8 @@ Enter your API key securely in the app sidebar during runtime.
 
 1. Push repository to GitHub
 2. Deploy via Streamlit Cloud
-3. Add API key in Streamlit Secrets
-4. Ensure `requirements.txt` contains:
+3. Add API key in Streamlit Secrets (optional)
+4. Ensure `requirements.txt` includes:
 
 ```
 streamlit
@@ -123,26 +124,38 @@ pandas
 
 ---
 
-## 🛡 Production-Level Error Handling
+## 🛡 Error Handling & Reliability
 
-* Corrupt or unreadable PDFs are safely handled
-* Empty PDF text automatically falls back to manual input
-* API quota errors trigger safe demo mode
-* Session state preserves report history
-* No sensitive information is logged
+* Corrupt or unreadable PDFs are safely skipped
+* Empty PDFs fall back to manual input
+* Missing or exceeded API key triggers **demo mode**
+* Persistent SQLite storage preserves report history
+* No sensitive data is logged
+
+---
+
+## 📊 Analytics Dashboard
+
+The app includes:
+
+* Risk Score trend over time
+* AI Confidence trend over time
+* Risk distribution charts
+* Historical report access
+
+All analytics work in both **real AI mode** and **demo mode**.
 
 ---
 
 ## 💰 Cost Consideration
 
 OpenAI API usage costs are billed in USD.
-
 For Nigerian developers:
 
-* ₦1,000 – ₦5,000 worth of API credits is sufficient for demo usage.
-* Heavy usage depends on model selection and token volume.
+* ₦1,000 – ₦5,000 worth of credits is enough for demo usage
+* Heavy usage depends on model selection and token volume
 
-Always monitor usage at:
+Monitor usage here:
 
 ```
 https://platform.openai.com/usage
@@ -150,31 +163,31 @@ https://platform.openai.com/usage
 
 ---
 
-## 📊 Application Architecture
+## 🔮 Architecture Overview
 
 ```
-User Input (PDF / Text)
-        ↓
-Safe Parsing Layer
-        ↓
-OpenAI Structured Analysis
-        ↓
-Pydantic Validation
-        ↓
-Dashboard Visualization + PDF Export
+PDF(s) / Text Input
+          ↓
+Text Aggregation & Preprocessing
+          ↓
+OpenAI AI Structured Analysis
+          ↓
+Pydantic Validation & Risk Scoring
+          ↓
+SQLite Persistent Storage
+          ↓
+Dashboard Visualization & PDF Export
 ```
 
 ---
 
-## 📈 Future Improvements
+## 📈 Future Enhancements
 
-* Multi-file intelligence aggregation
-* Persistent database storage
-* Authentication & role-based access
-* Risk scoring algorithm refinement
-* Real-time threat monitoring
-* Theme switch (Dark / Light)
-* Advanced analytics dashboard
+* Multi-user accounts with authentication & roles
+* Advanced risk scoring algorithm
+* Real-time threat monitoring simulation
+* Advanced analytics dashboard filters
+* Mobile UI refinements & theme presets
 
 ---
 
@@ -183,29 +196,26 @@ Dashboard Visualization + PDF Export
 **Samuel Otene**
 Full Stack Engineer | AI Systems Developer
 
-This project demonstrates:
+Demonstrates:
 
 * AI automation
-* Structured response engineering
-* Production-ready error handling
+* Structured output engineering
+* Persistent storage & session management
+* Enterprise dashboard design
 * Cloud deployment readiness
-* Modern SaaS dashboard UI design
 
 ---
 
 ## 📜 License
 
-This project is built for demonstration, portfolio, and educational purposes.
+This project is for **demonstration, portfolio, and educational purposes**.
 
 ```
 
 ---
 
-This is now:
+This version:
 
-✅ Proper GitHub Markdown  
-✅ Clean structure  
-✅ Developer-friendly  
-✅ Professional tone  
-✅ Includes ₦ reference  
-✅ Interview-ready  
+- Highlights **demo mode** (so you don’t need API credits yet)  
+- Shows **all new features** (multi-file, analytics, persistent DB, risk scoring, theme toggle)  
+- Professional and interview-ready ✅  
