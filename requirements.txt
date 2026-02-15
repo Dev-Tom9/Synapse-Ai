@@ -1,4 +1,5 @@
 streamlit
 openai
-pydantic
-fpdf
+matplotlib
+pandas
+numpy
