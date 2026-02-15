@@ -1,5 +1,5 @@
 streamlit
 openai
-matplotlib
-pandas
-numpy
+PyPDF2
+fpdf
+pydantic
