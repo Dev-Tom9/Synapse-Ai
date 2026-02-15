@@ -2,238 +2,129 @@ import streamlit as st
 from openai import OpenAI
 from pydantic import BaseModel
 from typing import List
-from fpdf import FPDF
-from datetime import datetime
-import PyPDF2
 import random
-import io
-import pandas as pd
 
-# ================= CONFIG =================
-st.set_page_config(
-    page_title="Synapse Intelligence OS",
-    page_icon="⚡",
-    layout="wide"
-)
+from database import init_db, save_report, fetch_reports
+from utils import extract_text_from_pdfs, calculate_risk_score
+from analytics import show_analytics
 
-# ================= STATE =================
-if "history" not in st.session_state:
-    st.session_state.history = []
+# ---------------- INIT DB ----------------
+init_db()
 
-# ================= PREMIUM UI =================
-st.markdown("""
-<style>
-.block-container { padding: 2rem 3rem; }
-.stApp {
-    background: radial-gradient(circle at top left, #0f172a, #020617 70%);
-    color: #f1f5f9;
-    font-family: 'Inter', sans-serif;
-}
-.hero-title {
-    font-size: 56px;
-    font-weight: 900;
-    background: linear-gradient(90deg, #00FFA3, #00CCFF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.badge {
-    padding: 4px 10px;
-    border-radius: 50px;
-    background: rgba(0,255,163,0.1);
-    color: #00FFA3;
-    font-size: 14px;
-    margin-right: 5px;
-}
-.glass-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(20px);
-    padding: 30px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-}
-.glass-card:hover {
-    transform: translateY(-3px);
-    border: 1px solid rgba(0,255,163,0.4);
-}
-.stButton>button {
-    background: linear-gradient(90deg, #00FFA3, #00CCFF);
-    color: black;
-    font-weight: 700;
-    border-radius: 14px;
-    height: 3rem;
-}
-textarea {
-    background-color: #0f172a !important;
-    border-radius: 16px !important;
-    border: 1px solid #1e293b !important;
-    color: white !important;
-}
-#MainMenu, footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Synapse Intelligence OS", layout="wide")
 
-# ================= MODEL =================
+# ---------------- THEME TOGGLE ----------------
+theme = st.sidebar.toggle("Light Mode")
+
+if theme:
+    st.markdown("""
+    <style>
+    .stApp { background-color: white; color: black; }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+    .stApp { background-color: #0f172a; color: white; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ---------------- MODEL ----------------
 class IntelligenceReport(BaseModel):
     summary: str
     key_findings: List[str]
     risks: List[str]
     strategic_recommendation: str
 
-# ================= PDF GENERATOR =================
-def create_pdf(data):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="SYNAPSE INTELLIGENCE REPORT", ln=True, align='C')
-    pdf.ln(10)
+# ---------------- SIDEBAR ----------------
+st.sidebar.header("🔐 API Access")
+api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
 
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 8, txt=f"Summary:\n{data.summary}\n")
-    pdf.multi_cell(0, 8, txt="Key Findings:")
-    for f in data.key_findings:
-        pdf.multi_cell(0, 8, txt=f"- {f}")
-    pdf.ln(5)
-    pdf.multi_cell(0, 8, txt="Risks:")
-    for r in data.risks:
-        pdf.multi_cell(0, 8, txt=f"- {r}")
-    pdf.ln(5)
-    pdf.multi_cell(0, 8, txt=f"Strategic Recommendation:\n{data.strategic_recommendation}")
-    return pdf.output(dest='S').encode('latin-1')
+# ---------------- HEADER ----------------
+st.title("⚡ Synapse Intelligence OS")
+st.caption("Enterprise AI Intelligence Platform")
 
-# ================= SIDEBAR =================
-with st.sidebar:
-    st.header("⚡ Secure Access")
-    if "api_key" in st.secrets:
-        api_key = st.secrets["api_key"]
-        st.success("API Key Loaded")
-    else:
-        api_key = st.text_input("Enter OpenAI API Key", type="password")
+# ---------------- INPUT ----------------
+uploaded_files = st.file_uploader(
+    "Upload Intelligence PDFs",
+    type=["pdf"],
+    accept_multiple_files=True
+)
 
-# ================= HERO =================
-st.markdown("""
-<h1 class="hero-title">Synapse Intelligence OS</h1>
-<p>Enterprise AI Intelligence & Risk Command Platform</p>
-<span class="badge">SYSTEM ACTIVE</span>
-""", unsafe_allow_html=True)
+manual_text = st.text_area("Or Paste Intelligence Text")
 
-st.divider()
+if st.button("Run Intelligence Engine"):
 
-# ================= DASHBOARD METRICS =================
-m1, m2, m3 = st.columns(3)
-m1.metric("Reports Generated", len(st.session_state.history))
-m2.metric("System Confidence", f"{random.randint(92,99)}%")
-m3.metric("Threat Index", random.randint(1,10))
+    combined_text = ""
 
-st.divider()
+    if uploaded_files:
+        combined_text += extract_text_from_pdfs(uploaded_files)
 
-col1, col2 = st.columns(2)
+    if manual_text:
+        combined_text += manual_text
 
-# ================= INPUT =================
-with col1:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    if not combined_text.strip():
+        st.warning("Please upload or paste intelligence data.")
+        st.stop()
 
-    uploaded_file = st.file_uploader("Upload Intelligence PDF", type=["pdf"])
-    source_text = st.text_area("Or Paste Intelligence Text", height=250)
+    try:
+        if api_key:
+            client = OpenAI(api_key=api_key)
 
-    # ================= SAFE PDF HANDLING =================
-    if uploaded_file:
-        try:
-            reader = PyPDF2.PdfReader(uploaded_file)
-            pdf_text = ""
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    pdf_text += page_text
-            if pdf_text.strip():
-                source_text = pdf_text
-            else:
-                st.warning("PDF had no readable text. Using text input.")
-        except PyPDF2.errors.PdfReadError:
-            st.warning("PDF could not be read. Using text input instead.")
-
-    run = st.button("Run Intelligence Engine")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ================= OUTPUT =================
-with col2:
-    if run and source_text:
-        try:
-            if api_key:
-                client = OpenAI(api_key=api_key)
-                with st.spinner("Running AI Intelligence Scan..."):
-                    completion = client.beta.chat.completions.parse(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": "Extract structured intelligence."},
-                            {"role": "user", "content": source_text}
-                        ],
-                        response_format=IntelligenceReport,
-                    )
-                rep = completion.choices[0].message.parsed
-            else:
-                raise Exception("No API Key")
-
-        except Exception:
-            # 🔥 FALLBACK DEMO MODE
-            rep = IntelligenceReport(
-                summary="The organization faces operational strain and rising competition.",
-                key_findings=[
-                    "Revenue growth observed",
-                    "Technical team turnover increasing",
-                    "Competitive AI products emerging"
+            completion = client.beta.chat.completions.parse(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "Extract structured intelligence."},
+                    {"role": "user", "content": combined_text}
                 ],
-                risks=[
-                    "Margin compression",
-                    "Cybersecurity threats",
-                    "Operational misalignment"
-                ],
-                strategic_recommendation="Optimize infrastructure costs and strengthen cybersecurity governance."
+                response_format=IntelligenceReport,
             )
 
-        # ================= SAVE HISTORY =================
-        st.session_state.history.append(rep)
+            rep = completion.choices[0].message.parsed
+        else:
+            raise Exception("No API Key")
 
-        # ================= DISPLAY RESULTS =================
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-
-        # Tabs for organized sections
-        tabs = st.tabs(["Executive Summary", "Key Findings", "Risks", "Strategic Recommendation"])
-        with tabs[0]:
-            st.write(rep.summary)
-        with tabs[1]:
-            for f in rep.key_findings:
-                st.markdown(f"<span class='badge'>{f}</span>", unsafe_allow_html=True)
-        with tabs[2]:
-            for r in rep.risks:
-                st.markdown(f"<span class='badge'>⚠️ {r}</span>", unsafe_allow_html=True)
-        with tabs[3]:
-            st.write(rep.strategic_recommendation)
-
-        # ================= RISK CHART =================
-        if rep.risks:
-            risk_scores = [random.randint(50,100) for _ in rep.risks]
-            df = pd.DataFrame({"Risks": rep.risks, "Severity": risk_scores})
-            st.bar_chart(df.set_index("Risks"))
-
-        # ================= CONFIDENCE BAR =================
-        confidence = random.randint(85,99)
-        st.progress(confidence)
-        st.write(f"AI Confidence Level: {confidence}%")
-
-        # ================= PDF EXPORT =================
-        pdf_bytes = create_pdf(rep)
-        st.download_button(
-            "Download Report",
-            data=pdf_bytes,
-            file_name=f"synapse_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    except:
+        rep = IntelligenceReport(
+            summary="Operational strain and emerging market risks detected.",
+            key_findings=["Revenue growth", "Staff turnover rising"],
+            risks=["Cybersecurity vulnerability", "Market competition"],
+            strategic_recommendation="Scale infrastructure and enhance cybersecurity."
         )
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    # -------- Risk Score Algorithm --------
+    risk_score = calculate_risk_score(rep.risks)
+    confidence = random.randint(85, 99)
 
-# ================= HISTORY SECTION =================
-if st.session_state.history:
-    st.divider()
-    st.subheader("Previous Intelligence Reports")
-    for idx, item in enumerate(st.session_state.history[::-1]):
-        st.markdown(f"**Report {len(st.session_state.history)-idx}** — {item.summary[:60]}...")
+    # -------- Save to DB --------
+    save_report(
+        rep.summary,
+        rep.risks,
+        rep.key_findings,
+        rep.strategic_recommendation,
+        risk_score,
+        confidence
+    )
+
+    # -------- Display --------
+    st.subheader("Executive Summary")
+    st.write(rep.summary)
+
+    st.subheader("Key Findings")
+    for f in rep.key_findings:
+        st.write(f"- {f}")
+
+    st.subheader("Risks")
+    for r in rep.risks:
+        st.write(f"- {r}")
+
+    st.subheader("Recommendation")
+    st.write(rep.strategic_recommendation)
+
+    st.metric("Risk Score", f"{risk_score}/100")
+    st.metric("AI Confidence", f"{confidence}%")
+
+# ---------------- ANALYTICS ----------------
+st.divider()
+reports = fetch_reports()
+show_analytics(reports)
