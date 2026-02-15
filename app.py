@@ -4,10 +4,9 @@ from pydantic import BaseModel
 from typing import List
 from fpdf import FPDF
 from datetime import datetime
-import matplotlib.pyplot as plt
+import PyPDF2
 import random
 import io
-import PyPDF2
 
 # ================= CONFIG =================
 st.set_page_config(
@@ -50,6 +49,10 @@ st.markdown("""
     padding: 30px;
     border-radius: 20px;
     margin-bottom: 20px;
+}
+.glass-card:hover {
+    transform: translateY(-4px);
+    border: 1px solid rgba(0,255,163,0.4);
 }
 .stButton>button {
     background: linear-gradient(90deg, #00FFA3, #00CCFF);
@@ -131,12 +134,18 @@ with col1:
     uploaded_file = st.file_uploader("Upload Intelligence PDF", type=["pdf"])
     source_text = st.text_area("Or Paste Intelligence Text", height=250)
 
+    # ================= SAFE PDF HANDLING =================
     if uploaded_file:
-        reader = PyPDF2.PdfReader(uploaded_file)
-        pdf_text = ""
-        for page in reader.pages:
-            pdf_text += page.extract_text()
-        source_text = pdf_text
+        try:
+            reader = PyPDF2.PdfReader(uploaded_file)
+            pdf_text = ""
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    pdf_text += page_text
+            source_text = pdf_text if pdf_text.strip() else source_text
+        except PyPDF2.errors.PdfReadError:
+            st.warning("PDF could not be read. Using plain text input instead.")
 
     run = st.button("Run Intelligence Engine")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -161,7 +170,7 @@ with col2:
                 raise Exception("No API Key")
 
         except Exception:
-            # Fallback Demo Mode
+            # 🔥 FALLBACK DEMO MODE
             rep = IntelligenceReport(
                 summary="The organization faces operational strain and rising competition.",
                 key_findings=[
@@ -177,9 +186,12 @@ with col2:
                 strategic_recommendation="Optimize infrastructure costs and strengthen cybersecurity governance."
             )
 
+        # ================= SAVE HISTORY =================
         st.session_state.history.append(rep)
 
+        # ================= DISPLAY RESULTS =================
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+
         st.subheader("Executive Summary")
         st.write(rep.summary)
 
@@ -196,17 +208,14 @@ with col2:
 
         # ================= RISK CHART =================
         risk_score = len(rep.risks) * random.randint(10,25)
-
-        fig, ax = plt.subplots()
-        ax.bar(["Risk Score"], [risk_score])
-        ax.set_ylim(0,100)
-        st.pyplot(fig)
+        st.bar_chart({"Risk Score": [risk_score]})
 
         # ================= CONFIDENCE BAR =================
         confidence = random.randint(85,99)
         st.progress(confidence)
         st.write(f"AI Confidence Level: {confidence}%")
 
+        # ================= PDF EXPORT =================
         pdf_bytes = create_pdf(rep)
         st.download_button(
             "Download Report",
