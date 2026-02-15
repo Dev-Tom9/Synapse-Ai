@@ -210,7 +210,6 @@ Demonstrates:
 
 This project is for **demonstration, portfolio, and educational purposes**.
 
-```
 This version:
 
 - Highlights **demo mode** (so you don’t need API credits yet)  
