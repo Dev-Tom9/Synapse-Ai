@@ -193,7 +193,7 @@ Dashboard Visualization & PDF Export
 
 ## 👨‍💻 Author
 
-**Samuel Otene**
+**Tomiwa Samuel Otene**
 Full Stack Engineer | AI Systems Developer
 
 Demonstrates:
