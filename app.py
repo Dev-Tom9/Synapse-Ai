@@ -7,6 +7,7 @@ from datetime import datetime
 import PyPDF2
 import random
 import io
+import pandas as pd
 
 # ================= CONFIG =================
 st.set_page_config(
@@ -36,11 +37,12 @@ st.markdown("""
     -webkit-text-fill-color: transparent;
 }
 .badge {
-    padding: 6px 14px;
+    padding: 4px 10px;
     border-radius: 50px;
     background: rgba(0,255,163,0.1);
     color: #00FFA3;
     font-size: 14px;
+    margin-right: 5px;
 }
 .glass-card {
     background: rgba(255,255,255,0.05);
@@ -51,7 +53,7 @@ st.markdown("""
     margin-bottom: 20px;
 }
 .glass-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     border: 1px solid rgba(0,255,163,0.4);
 }
 .stButton>button {
@@ -143,9 +145,12 @@ with col1:
                 page_text = page.extract_text()
                 if page_text:
                     pdf_text += page_text
-            source_text = pdf_text if pdf_text.strip() else source_text
+            if pdf_text.strip():
+                source_text = pdf_text
+            else:
+                st.warning("PDF had no readable text. Using text input.")
         except PyPDF2.errors.PdfReadError:
-            st.warning("PDF could not be read. Using plain text input instead.")
+            st.warning("PDF could not be read. Using text input instead.")
 
     run = st.button("Run Intelligence Engine")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -192,23 +197,24 @@ with col2:
         # ================= DISPLAY RESULTS =================
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 
-        st.subheader("Executive Summary")
-        st.write(rep.summary)
-
-        st.subheader("Key Findings")
-        for f in rep.key_findings:
-            st.write(f"- {f}")
-
-        st.subheader("Risk Analysis")
-        for r in rep.risks:
-            st.write(f"- {r}")
-
-        st.subheader("Strategic Recommendation")
-        st.write(rep.strategic_recommendation)
+        # Tabs for organized sections
+        tabs = st.tabs(["Executive Summary", "Key Findings", "Risks", "Strategic Recommendation"])
+        with tabs[0]:
+            st.write(rep.summary)
+        with tabs[1]:
+            for f in rep.key_findings:
+                st.markdown(f"<span class='badge'>{f}</span>", unsafe_allow_html=True)
+        with tabs[2]:
+            for r in rep.risks:
+                st.markdown(f"<span class='badge'>⚠️ {r}</span>", unsafe_allow_html=True)
+        with tabs[3]:
+            st.write(rep.strategic_recommendation)
 
         # ================= RISK CHART =================
-        risk_score = len(rep.risks) * random.randint(10,25)
-        st.bar_chart({"Risk Score": [risk_score]})
+        if rep.risks:
+            risk_scores = [random.randint(50,100) for _ in rep.risks]
+            df = pd.DataFrame({"Risks": rep.risks, "Severity": risk_scores})
+            st.bar_chart(df.set_index("Risks"))
 
         # ================= CONFIDENCE BAR =================
         confidence = random.randint(85,99)
