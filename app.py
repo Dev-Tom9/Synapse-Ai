@@ -6,13 +6,15 @@ import random
 from database import init_db, save_report, fetch_reports
 from utils import extract_text_from_pdfs, calculate_risk_score
 from analytics import show_analytics
+from fpdf import FPDF
 
 # ---------------- INIT DB ----------------
 init_db()
 
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="⚡ Synapse Intelligence OS",
-    page_icon="⚡",
+    page_title="Synapse Intelligence OS",
+    page_icon="favicon.png",  # Custom PNG favicon
     layout="wide"
 )
 
@@ -28,19 +30,21 @@ def set_theme():
     if st.session_state.theme == "light":
         st.markdown("""
         <style>
-        .stApp { background: #f5f7fa; color: #111827; font-family: 'Inter', sans-serif;}
-        .glass-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(14px); padding: 25px; border-radius: 18px; margin-bottom: 20px;}
-        .stButton>button {background: linear-gradient(90deg, #00CFFF, #00FFA3); color: black; font-weight: 700; border-radius: 14px; height: 3rem; border: none;}
-        textarea, .fileUploader {background-color: #e5e7eb !important; color: #111827 !important; border-radius: 16px !important; border: 1px solid #d1d5db !important;}
+        .stApp { background: linear-gradient(to bottom, #f5f7fa, #e0e2eb); color: #111827; font-family: 'Inter', sans-serif;}
+        .glass-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(16px); padding: 25px; border-radius: 20px; margin-bottom: 20px;}
+        .stButton>button {background: linear-gradient(90deg, #00CFFF, #00FFA3); color: black; font-weight: 700; border-radius: 16px; height: 3rem; border: none; transition: all 0.3s;}
+        .stButton>button:hover {opacity:0.85; transform: scale(1.02);}
+        textarea, .fileUploader {background-color: #e5e7eb !important; color: #111827 !important; border-radius: 18px !important; border: 1px solid #d1d5db !important;}
         </style>
         """, unsafe_allow_html=True)
     else:
         st.markdown("""
         <style>
         .stApp { background: radial-gradient(circle at top left, #0e1117, #050505 70%); color: #f3f4f6; font-family: 'Inter', sans-serif;}
-        .glass-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(14px); padding: 25px; border-radius: 18px; margin-bottom: 20px;}
-        .stButton>button {background: linear-gradient(90deg, #00FFA3, #00CCFF); color: black; font-weight: 700; border-radius: 14px; height: 3rem; border: none;}
-        textarea, .fileUploader {background-color: #111827 !important; border-radius: 16px !important; border: 1px solid #1f2937 !important; color: white !important;}
+        .glass-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(16px); padding: 25px; border-radius: 20px; margin-bottom: 20px;}
+        .stButton>button {background: linear-gradient(90deg, #00FFA3, #00CCFF); color: black; font-weight: 700; border-radius: 16px; height: 3rem; border: none; transition: all 0.3s;}
+        .stButton>button:hover {opacity:0.85; transform: scale(1.02);}
+        textarea, .fileUploader {background-color: #111827 !important; border-radius: 18px !important; border: 1px solid #1f2937 !important; color: white !important;}
         </style>
         """, unsafe_allow_html=True)
 
@@ -61,6 +65,8 @@ class IntelligenceReport(BaseModel):
 # ---------------- SIDEBAR ----------------
 st.sidebar.header("🔐 API Access")
 api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
+st.sidebar.markdown("---")
+st.sidebar.info("Use demo mode if no API key or quota exceeded.")
 
 # ---------------- HEADER ----------------
 st.markdown("""
@@ -73,7 +79,7 @@ st.markdown("""
 # ---------------- INPUT ----------------
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 uploaded_files = st.file_uploader(
-    "Upload Intelligence PDFs",
+    "Upload PDFs for Intelligence Aggregation",
     type=["pdf"],
     accept_multiple_files=True
 )
@@ -148,6 +154,21 @@ if run:
 
         st.metric("Risk Score", f"{risk_score}/100")
         st.metric("AI Confidence", f"{confidence}%")
+
+        # PDF download
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, "Synapse Intelligence Report", ln=True, align='C')
+        pdf.ln(10)
+        pdf.set_font("Arial", size=10)
+        pdf.multi_cell(0, 10, f"Summary: {rep.summary}")
+        pdf.multi_cell(0, 10, "Key Findings:\n" + "\n".join(rep.key_findings))
+        pdf.multi_cell(0, 10, "Risks:\n" + "\n".join(rep.risks))
+        pdf.multi_cell(0, 10, f"Strategic Recommendation:\n{rep.strategic_recommendation}")
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        st.download_button("📄 Download PDF Report", pdf_bytes, file_name="report.pdf")
+
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ---- TAB 2: Analytics ----
@@ -160,7 +181,7 @@ if run:
         reports = fetch_reports()
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Past Reports")
-        for r in reports[:10]:  # latest 10
+        for r in reports[:10]:
             st.write(f"**{r[7]}** - Risk Score: {r[5]}/100 | Confidence: {r[6]}%")
             st.write(f"Summary: {r[1]}")
             st.markdown("---")
